@@ -1,5 +1,7 @@
 #!/bin/bash
 
+read -p "Gebe die Partitionsgröße in GB ein (z. B. 50): " PARTITION_SIZE
+
 # Determine if UEFI or BIOS boot mode
 if [ -d "/sys/firmware/efi/" ]; then
   BOOT_MODE="UEFI"
@@ -12,12 +14,12 @@ if [ "$BOOT_MODE" == "UEFI" ]; then
   parted /dev/sda mklabel gpt
   parted /dev/sda mkpart ESP fat32 1MiB 513MiB
   parted /dev/sda set 1 boot on
-  parted /dev/sda mkpart primary ext4 513MiB 100%
+  parted /dev/sda mkpart primary ext4 513MiB ${PARTITION_SIZE}GB
   mkfs.fat -F32 /dev/sda1
   mkfs.ext4 /dev/sda2
 else
   parted /dev/sda mklabel msdos
-  parted /dev/sda mkpart primary ext4 1MiB 100%
+  parted /dev/sda mkpart primary ext4 1MiB ${PARTITION_SIZE}GB
   mkfs.ext4 /dev/sda1
 fi
 
@@ -30,7 +32,7 @@ sed -i '/games/d' /mnt/etc/pacman.conf
 
 # Add the BlackArch repository
 echo "[BlackArch]" >> /mnt/etc/pacman.conf
-echo "Server = https://mirror.0x.sg/blackarch/$repo/os/$arch" >> /mnt/etc/pacman.conf
+echo "Server = https://mirror.0x.sg/blackarch/\$repo/os/\$arch" >> /mnt/etc/pacman.conf
 
 # Generate fstab
 genfstab -U /mnt >> /mnt/etc/fstab
@@ -43,9 +45,17 @@ ln -sf /usr/share/zoneinfo/Europe/Berlin /etc/localtime
 hwclock --systohc
 
 # Localization
-echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+echo "de_DE.UTF-8 UTF-8" >> /etc/locale.gen
 locale-gen
-echo "LANG=en_US.UTF-8" > /etc/locale.conf
+echo "LANG=de_DE.UTF-8" > /etc/locale.conf
+
+# Keyboard layout
+echo "KEYMAP=de-latin1" > /etc/vconsole.conf
+
+# Create user account
+read -p "Geben Sie den Benutzernamen ein: " USERNAME
+useradd -m -g users -G wheel,audio,video -s /bin/bash $USERNAME
+passwd $USERNAME
 
 # Network configuration
 echo "MyHostname" > /etc/hostname
