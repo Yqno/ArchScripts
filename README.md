@@ -1,2 +1,2 @@
-# Archinstallscripts
-Customized Install Scripts for arch linux
+# Arch Scripts
+Customized Install Scripts and more for Arch linux
